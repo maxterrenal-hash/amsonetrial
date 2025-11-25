@@ -1,4 +1,4 @@
-// mode.js
+//  mode.js
 import { $, $$, show, hide } from "./dom.js";
 import { populateDrugOptions } from "./drugs.js";
 import { updateEgfr } from "./egfr.js";
