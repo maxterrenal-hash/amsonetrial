@@ -1,4 +1,4 @@
-// drugs.js
+//  drugs.js
 import { currentMode } from "./mode.js";
 import { $ } from "./dom.js";
 
