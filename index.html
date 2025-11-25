@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ospital ng Makati – Antimicrobial Request System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --osmak-green: #009a3e;
+      --osmak-green-dark: #007530;
+      --osmak-red: #dc2626;
+      --bg-main: #f5f5f5;
+      --bg-card: #ffffff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #d1d5db;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+    }
+
+    #monographBox {
+    font-size: 0.78rem;   /* adjust smaller or larger */
+    line-height: 1.2rem; /* tighten spacing */
+    /* ↓↓↓ The important part ↓↓↓ */
+    flex: 1;
+    max-height: 200px;
+    overflow-y: auto;       /* scroll vertically when needed */
+    padding-right: 6px;     /* avoids text touching scrollbar */
+    }
+
+    #monographBox h3 {
+    font-size: 0.9rem;    /* smaller title */
+    margin-bottom: 0.4rem;
+    }
+
+    #monographBox p {
+    margin: 0.25rem 0;
+    }
+
+    @media (min-width: 900px) {
+      #monographBox {
+        max-height: 350px;
+      }
+    }
+    
+      /* DESKTOP GRID PLACEMENT (≥900px) */
+  @media (min-width: 900px) {
+    /* Lab spans both columns at the top */
+    .lab-card {
+      grid-column: 1 / 3;
+    }
+  
+    /* Left column cards */
+    .antimicrobial-card,
+    .indication-card,
+    .resident-card,
+    #serviceResidentCard {
+      grid-column: 1;
+    }
+  
+    /* Right column cards */
+    .monograph-card,
+    .prevabx-card,
+    .micro-card {
+      grid-column: 2;
+    }
+  }
+
+    
+    .lab-card {
+    grid-column: 1 / 3;   /* span both columns */
+    }
+
+    @media (max-width: 900px) {
+    .grid-two {
+      display: grid;
+      grid-template-areas:
+        "lab"
+        "bial"
+        "monograph"
+        "indication"
+        "prevabx"
+        "micro"
+        "resident";
+    }
+
+      .lab-card { grid-area: lab; }
+      .antimicrobial-card { grid-area: antimicrobial; }
+      .monograph-card { grid-area: monograph; }
+      .indication-card { grid-area: indication; }
+      .prevabx-card { grid-area: prevabx; }
+      .micro-card { grid-area: micro; }
+      .resident-card { grid-area: resident; }
+    }
+
+    
+    .app {
+      max-width: 1100px;
+      margin: 0 auto 3rem;
+      padding: 1rem;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--osmak-green);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    header img { height: 48px; width: auto; }
+    header .title-block { display: flex; flex-direction: column; }
+    header .title-block h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    header .title-block span {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .toggle-row {
+      display: inline-flex;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #fff;
+      margin-bottom: 1rem;
+    }
+    .toggle-btn {
+      padding: 0.35rem 0.9rem;
+      font-size: 0.85rem;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      min-width: 90px;
+    }
+    .toggle-btn.active {
+      background: var(--osmak-green);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .monograph-card {
+      height: 260px; /* same as antibial-card */
+      display: flex;
+      flex-direction: column;
+    }
+
+    
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;   /* evenly split */
+      gap: 1rem;
+    }
+    @media(max-width:900px){
+      .grid-two{ grid-template-columns:minmax(0,1fr); }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 0.75rem;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 4px 10px rgba(15,23,42,0.05);
+      border: 1px solid #e5e7eb;
+      margin-bottom: 1rem;
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .field-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.75rem;
+      margin-bottom:0.5rem;
+    }
+
+    /* Prevent antimicrobial card from collapsing when fields are hidden */
+    .antimicrobial-card {
+      min-height: 260px; /* adjust as needed */
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    
+    
+    
+    .field {
+      flex:1 1 140px;
+      min-width:120px;
+      display:flex;
+      flex-direction:column;
+      gap:0.25rem;
+    }
+
+    .field label {
+      font-size:0.75rem;
+      color:var(--text-muted);
+    }
+
+    .checkbox-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    }
+  
+    .checkbox-inline input[type="checkbox"] {
+    transform: scale(1.1);
+    }
+
+    
+    input[type="text"], input[type="number"], select, textarea {
+      border-radius:0.5rem;
+      border:1px solid var(--border);
+      padding:0.4rem 0.55rem;
+      font-size:0.85rem;
+      font-family:inherit;
+      outline:none;
+      background:#fff;
+    }
+
+    textarea {
+      min-height:70px;
+      resize:vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color:var(--osmak-green);
+      box-shadow:0 0 0 1px rgba(0,154,62,0.15);
+    }
+
+    .readonly-box {
+      padding:0.45rem 0.6rem;
+      border-radius:0.5rem;
+      border:1px dashed var(--border);
+      background:#f9fafb;
+      font-size:0.85rem;
+      min-height:32px;
+      display:flex;
+      align-items:center;
+    }
+
+    .chips-row {
+      display:flex;
+      background: #ffffff;
+      flex-wrap:wrap;
+      gap:0.5rem;
+      font-size:0.78rem;
+    }
+
+    .chip {
+      padding:0.2rem 0.6rem;
+      border-radius:999px;
+      border:1px solid var(--border);
+      cursor:pointer;
+    }
+    .chip.active{
+      border-color:var(--osmak-green);
+      background:rgba(0,154,62,0.06);
+      color:var(--osmak-green-dark);
+    }
+
+    .dyn-row {
+      display: grid;
+      grid-template-columns: minmax(0,2fr) minmax(0,1.2fr) minmax(0,1.2fr) auto;
+      gap:0.4rem;
+      margin-bottom:0.35rem;
+      align-items:center;
+    }
+
+    .organism-block {
+      border-radius:0.75rem;
+      border:1px dashed var(--border);
+      padding:0.6rem 0.7rem;
+      margin-bottom:0.5rem;
+      background:#f9fafb;
+    }
+
+    .actions {
+      display:flex;
+      justify-content:flex-end;
+      gap:0.75rem;
+      margin-top:1rem;
+    }
+
+    .btn {
+      border-radius:999px;
+      border:1px solid transparent;
+      padding:0.45rem 1.1rem;
+      font-size:0.85rem;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn.primary {
+      background:var(--osmak-green);
+      color:#fff;
+    }
+    .btn.primary:hover {
+      background:var(--osmak-green-dark);
+    }
+    .btn.secondary {
+      background:#fff;
+      border-color:var(--border);
+      color:var(--text-main);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:50;
+    }
+    .modal-backdrop.show { display:flex; }
+
+    .modal {
+      background:#fff;
+      border-radius:0.75rem;
+      max-width:700px;
+      width:100%;
+      max-height:80vh;
+      overflow:auto;
+      box-shadow:0 20px 40px rgba(15,23,42,0.3);
+    }
+    .modal-header {
+      padding:0.75rem 1rem;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .modal-body {
+      padding:0.75rem 1rem 1rem;
+      font-size:0.84rem;
+    }
+    .summary-label {
+      font-weight:600;
+      color:var(--text-muted);
+      font-size:0.8rem;
+    }
+
+   .susc-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+   }
+
+   .susc-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 40px;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+    
+  </style>
+</head>
+
+<body>
+  <header>
+    <img src="https://maxterrenal-hash.github.io/justculture/osmak-logo.png" alt="OsMak Logo">
+    <div class="title-block">
+      <h1>OSPITAL NG MAKATI</h1>
+      <span>Antimicrobial Request System – Doctors Module</span>
+    </div>
+  </header>
+
+  <div class="app">
+
+    <div class="toggle-row" id="modeToggle">
+      <button class="toggle-btn active" data-mode="adult">Adult</button>
+      <button class="toggle-btn" data-mode="pediatric">Pediatric</button>
+    </div>
+
+    <!-- PATIENT INFORMATION CARD -->
+    <div class="card">
+      <h2>Patient Information</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Patient Name</label>
+          <input type="text" id="patientName">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="0">
+        </div>
+
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" min="0" step="0.1">
+        </div>
+
+        <div class="field" id="heightField" style="display:none;">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="0" step="0.1">
+        </div>
+      </div>
+
+<!-- HOSPITAL NUMBER + WARD + DIAGNOSIS (SIDE BY SIDE) -->
+<div class="field-row">
+  <div class="field">
+    <label>Hospital Number</label>
+    <input type="text" id="hospitalNumber">
+  </div>
+
+  <div class="field">
+    <label>Ward / Unit</label>
+    <select id="ward">
+      <option value="">Select ward</option>
+      <option>6th Floor Ward</option>
+      <option>ARI 2</option>
+      <option>Dengue Ward</option>
+      <option>ER Holding</option>
+      <option>ER Isolation</option>
+      <option>ICU</option>
+      <option>Infectious Ward</option>
+      <option>Medicine Female</option>
+      <option>Medicine Male</option>
+      <option>Medicine Isolation Room</option>
+      <option>NICU</option>
+      <option>Pedia ICU</option>
+      <option>Pedia Ward 3</option>
+      <option>Pedia Ward 1 Stepdown</option>
+      <option>Respiratory ICU</option>
+      <option>SARI</option>
+      <option>Surgery Female</option>
+      <option>Surgery Male</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Diagnosis</label>
+    <input type="text" id="diagnosis">
+  </div>
+</div>
+
+
+
+    <!-- LEFT SIDE (Lab, Drug, Indication, Micro, Resident) -->
+    <div class="grid-two">
+
+        <!-- LAB DATA -->
+<div class="card lab-card">
+  <h2>Laboratory Data</h2>
+
+  <!-- FIRST ROW: Scr + SGPT + eGFR -->
+  <div class="field-row">
+    <div class="field">
+      <label>Serum Creatinine (µmol/L)</label>
+      <input type="number" id="scr" min="0" step="0.01">
+    </div>
+
+    <div class="field">
+      <label>SGPT (optional)</label>
+      <input type="number" id="sgpt" min="0" step="1">
+    </div>
+
+    <div class="field">
+      <label id="egfrLabel">Renal Function (eGFR)</label>
+      <div class="readonly-box" id="egfrBox">—</div>
+    </div>
+  </div>
+
+  <!-- NEW: Creatinine not available checkbox -->
+  <div class="field-row">
+    <label class="checkbox-inline">
+      <input type="checkbox" id="scrNotAvailable">
+      Creatinine not yet available
+    </label>
+  </div>
+</div>
+
+
+      <div>
+        <!-- ANTIBIOTIC SELECTION -->
+        <div class="card antimicrobial-card">
+          <h2>Antimicrobial Selection</h2>
+
+          <div class="field-row">
+            <div class="field" style="flex:1 1 100%;">
+              <label>Antimicrobial</label>
+              <select id="antimicrobialSelect">
+                <option value="">Select drug</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field" style="flex:1 1 100%;">
+              <label>Drug Type</label>
+              <input type="text" id="drugTypeBox" readonly>
+            </div>
+          </div>
+
+          <div id="dosingSection">
+            <div class="field-row">
+              <div class="field">
+                <label>Dose</label>
+                <input type="text" id="dose">
+              </div>
+              <div class="field">
+                <label>Frequency</label>
+                <input type="text" id="frequency">
+              </div>
+              <div class="field">
+                <label>Duration (days)</label>
+                <input type="text" id="duration">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INDICATION -->
+        <div class="card indication-card">
+          <h2>Indication</h2>
+
+          <div class="chips-row" id="indicationRow">
+            <button type="button" class="chip" data-ind="Empiric">Empiric</button>
+            <button type="button" class="chip" data-ind="Prophylactic">Prophylactic</button>
+            <button type="button" class="chip" data-ind="Therapeutic">Therapeutic</button>
+          </div>
+
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.4rem;">
+            <strong>Empiric:</strong> treatment started before culture results.<br>
+            <strong>Prophylactic:</strong> antibiotics to prevent infection.<br>
+            <strong>Therapeutic:</strong> targeted treatment for confirmed infection.
+          </p>
+
+          <!-- ⭐ NEW FIELD: BASIS FOR INDICATION -->
+          <div class="field-row" style="margin-top:0.75rem;">
+            <div class="field" style="flex:1 1 100%;">
+              <label>Basis for Indication</label>
+              <textarea id="basisIndication" placeholder="Describe rationale (clinical findings, suspected source, guideline basis, pending cultures, etc.)"></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RESIDENT & DEPT -->
+        <div class="card resident-card">
+          <h2>Requesting Resident & Department</h2>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Resident's Name</label>
+              <input type="text" id="residentName">
+            </div>
+
+            <div class="field">
+              <label>Clinical Department</label>
+              <select id="clinicalDept">
+                <option value="">Select</option>
+                <option>Internal Medicine</option>
+                <option>Surgery</option>
+                <option>Pediatrics</option>
+                <option>Family and Community Medicine</option>
+                <option>Emergency</option>
+                <option>Anesthesiology</option>
+                <option>Obstetrics and Gynecology</option>
+                <option>Ophthalmology</option>
+                <option>Physical and Rehabilitation Medicine</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="reqDate">
+            </div>
+          </div>
+        </div>
+
+        <!-- SERVICE RESIDENT / IDS -->
+        <div class="card" id="serviceResidentCard" style="display:none;">
+          <h2 id="serviceResidentTitle">Internal Medicine Resident</h2>
+
+          <div class="field-row">
+            <div class="field">
+              <label id="serviceResidentLabel">Internal Medicine Resident's Name</label>
+              <input type="text" id="serviceResidentName">
+            </div>
+
+            <div class="field">
+              <label>Infectious Disease Specialist</label>
+              <select id="idsSelect">
+                <option value="">Select</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT SIDE: DRUG MONOGRAPH -->
+<div>
+
+  <!-- DRUG MONOGRAPH -->
+<div class="card monograph-card">
+  <h2>Drug Monograph</h2>
+  <div id="monographBox" class="monograph">
+    <p>Select an antimicrobial to view its monograph.</p>
+  </div>
+</div>
+
+<div class="card prevabx-card">
+  <h2>Previous / Current Antibiotics</h2>
+  <div id="prevAbxContainer"></div>
+  <button type="button" id="addPrevAbx" class="icon-btn">➕ Add Antibiotic</button>
+</div>
+
+<div class="card micro-card">
+  <h2>Microbiology Data</h2>
+  <div class="field-row">
+    <div class="field" style="flex:1 1 100%;">
+      <label>Specimen Type</label>
+      <input type="text" id="specimen" placeholder="Blood, Sputum, Urine, etc.">
+    </div>
+  </div>
+  <div id="organismContainer"></div>
+  <button type="button" class="icon-btn" id="addOrganism">➕ Add Organism</button>
+</div>
+
+
+</div>
+
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="submitBtn" type="button">Submit</button>
+      <button class="btn secondary" id="downloadPdfBtn" type="button">Download PDF</button>
+    </div>
+
+    <div class="banner">Note: Verify all dosing and eGFR manually.</div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Review Antimicrobial Request</h3>
+        <button class="icon-btn" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="summaryBody"></div>
+      <div class="actions" style="padding:0 1rem 0.8rem;">
+        <button class="btn primary" id="modalConfirm">Confirm & Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monographs -->
+  <script src="adult_monographs.js"></script>
+  <script src="pediatric_monographs.js"></script>
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0n2s4y7CBxTvbh_XWp-mndzMLAIxCy6z8qZjMYpzAJ8Yjs-hHi660Z2DVGr20S7XSjQ/exec"; // replace with your Apps Script URL
+
+  // DRUG LISTS (built from monograph files)
+  const DRUG_LISTS = { adult: [], pediatric: [] };
+  let currentMode = "adult";
+  let selectedIndication = "";
+
+  function buildDrugListFromMonographs() {
+    DRUG_LISTS.adult = [];
+    DRUG_LISTS.pediatric = [];
+
+    if (typeof ADULT_MONOGRAPHS === "object") {
+      Object.entries(ADULT_MONOGRAPHS).forEach(([drugKey, meta]) => {
+        const type = meta.restriction || (meta.restricted ? "restricted" : "monitored");
+        DRUG_LISTS.adult.push({ value: drugKey, label: drugKey, type });
+      });
+    }
+
+    if (typeof PEDIATRIC_MONOGRAPHS === "object") {
+      Object.entries(PEDIATRIC_MONOGRAPHS).forEach(([drugKey, meta]) => {
+        const type = meta.restriction || (meta.restricted ? "restricted" : "monitored");
+        DRUG_LISTS.pediatric.push({ value: drugKey, label: drugKey, type });
+      });
+    }
+
+    DRUG_LISTS.adult.sort((a,b)=>a.label.localeCompare(b.label));
+    DRUG_LISTS.pediatric.sort((a,b)=>a.label.localeCompare(b.label));
+  }
+
+  function tryBuildDrugList() {
+    try { buildDrugListFromMonographs(); }
+    catch {
+      DRUG_LISTS.adult = [
+        { value:"Ceftriaxone", label:"Ceftriaxone", type:"monitored" },
+        { value:"Meropenem", label:"Meropenem", type:"restricted" }
+      ];
+      DRUG_LISTS.pediatric = DRUG_LISTS.adult;
+    }
+  }
+
+  // INIT
+  function init() {
+    tryBuildDrugList();
+
+    document.getElementById("submitBtn").addEventListener("click", () => {
+      if (!validateForm()) return;
+      openReviewModal();
+    });
+
+    document.querySelectorAll("#modeToggle .toggle-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll("#modeToggle .toggle-btn")
+          .forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        currentMode = btn.dataset.mode;
+        onModeChange();
+      });
+    });
+
+    document.getElementById("scr").addEventListener("input", updateEgfr);
+    document.getElementById("age").addEventListener("input", updateEgfr);
+    document.getElementById("sex").addEventListener("change", updateEgfr);
+    document.getElementById("height").addEventListener("input", updateEgfr);
+
+        // Creatinine not available toggle
+    const scrNotAvail = document.getElementById("scrNotAvailable");
+    scrNotAvail.addEventListener("change", onScrNotAvailableChange);
+
+    
+    document.getElementById("antimicrobialSelect").addEventListener("change", onDrugChange);
+    document.getElementById("addPrevAbx").addEventListener("click", addPrevAbxRow);
+    document.getElementById("addOrganism").addEventListener("click", addOrganismBlock);
+    
+    document.getElementById("modalClose").addEventListener("click", closeModal);
+    document.getElementById("modalConfirm").addEventListener("click", submitForm);
+
+    // Indication chips
+    document.querySelectorAll("#indicationRow .chip").forEach(chip=>{
+      chip.addEventListener("click",()=>{
+        document.querySelectorAll("#indicationRow .chip")
+          .forEach(c=>c.classList.remove("active"));
+        chip.classList.add("active");
+        selectedIndication = chip.dataset.ind;
+      });
+    });
+
+    onModeChange();
+    addPrevAbxRow();
+    addOrganismBlock();
+    // 🔥 DEFAULT DATE HERE
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("reqDate").value = today;
+}
+
+  function onModeChange() {
+    document.getElementById("heightField").style.display =
+      currentMode === "pediatric" ? "flex" : "none";
+
+    document.getElementById("egfrLabel").textContent =
+      currentMode === "adult"
+        ? "Renal Function (CKD-EPI eGFR)"
+        : "Renal Function (CKiD eGFR)";
+
+    document.getElementById("egfrBox").textContent = "—";
+
+    populateDrugOptions();
+    onDrugChange();
+    updateEgfr();
+  }
+
+  function populateDrugOptions() {
+    const sel = document.getElementById("antimicrobialSelect");
+    const currentVal = sel.value;
+    sel.innerHTML = "";
+
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "Select drug";
+    sel.appendChild(opt0);
+
+    const list = DRUG_LISTS[currentMode] || [];
+    list.forEach(drug=>{
+      const opt = document.createElement("option");
+      opt.value = drug.value;
+      opt.textContent = `${drug.label} (${drug.type === "monitored" ? "Monitored" : "Restricted"})`;
+      sel.appendChild(opt);
+    });
+
+    sel.value = currentVal;
+  }
+
+    function onScrNotAvailableChange() {
+    const cb  = document.getElementById("scrNotAvailable");
+    const scr = document.getElementById("scr");
+    const box = document.getElementById("egfrBox");
+
+    if (cb.checked) {
+      // Disable and clear creatinine
+      scr.value = "";
+      scr.disabled = true;
+
+      // Show pending eGFR
+      box.textContent = "Pending";
+    } else {
+      // Re-enable creatinine entry
+      scr.disabled = false;
+      // Recalculate eGFR using current inputs
+      updateEgfr();
+    }
+  }
+
+  
+  // ============================
+  // eGFR CALCULATIONS
+  // ============================
+  function updateEgfr() {
+    const scrNotAvail = document.getElementById("scrNotAvailable").checked;
+    const box = document.getElementById("egfrBox");
+
+    // If creatinine is explicitly marked as not available
+    if (scrNotAvail) {
+      box.textContent = "Pending";
+      return;
+    }
+
+    let age = parseFloat(document.getElementById("age").value);
+    let sex = document.getElementById("sex").value;
+    let scr = parseFloat(document.getElementById("scr").value);
+    let height = parseFloat(document.getElementById("height").value);
+
+    // If Scr exists, convert µmol/L → mg/dL
+    if (!isNaN(scr) && scr > 0) scr = scr / 88.4;
+
+    if (isNaN(age) || !sex || isNaN(scr)) {
+      box.textContent = "—";
+      return;
+    }
+
+    let egfr;
+    if (currentMode === "adult") {
+      egfr = calcCkdEpi2021(age, sex, scr);
+    } else {
+      if (!height) {
+        box.textContent = "Enter height for pediatric eGFR.";
+        return;
+      }
+      egfr = calcCkidHeightBased(height, scr);
+    }
+
+    box.textContent = isFinite(egfr) ? egfr.toFixed(1) + " mL/min/1.73m²" : "—";
+  }
+
+
+  function calcCkdEpi2021(age, sex, scr) {
+    const k = sex === "female" ? 0.7 : 0.9;
+    const alpha = sex === "female" ? -0.241 : -0.302;
+    const minScr = Math.min(scr/k,1);
+    const maxScr = Math.max(scr/k,1);
+
+    return 142 *
+      Math.pow(minScr,alpha) *
+      Math.pow(maxScr,-1.2) *
+      Math.pow(0.9938,age) *
+      (sex === "female" ? 1.012 : 1);
+  }
+
+  function calcCkidHeightBased(ht, scr) {
+    return 0.413 * (ht / scr);
+  }
+
+  // ============================
+  // DRUG CHANGE
+  // ============================
+  function onDrugChange() {
+    const sel = document.getElementById("antimicrobialSelect");
+    const val = sel.value;
+    const dosingSection = document.getElementById("dosingSection");
+    const monographBox = document.getElementById("monographBox");
+
+    const serviceCard = document.getElementById("serviceResidentCard");
+    const serviceTitle = document.getElementById("serviceResidentTitle");
+    const serviceLabel = document.getElementById("serviceResidentLabel");
+    const serviceNameInput = document.getElementById("serviceResidentName");
+    const idsSelect = document.getElementById("idsSelect");
+
+    serviceCard.style.display = "none";
+    serviceNameInput.value = "";
+
+    if (!val) {
+
+      monographBox.innerHTML = "<p>Select an antimicrobial.</p>";
+      return;
+    }
+
+    const mono =
+      currentMode === "adult"
+        ? ADULT_MONOGRAPHS[val] || PEDIATRIC_MONOGRAPHS[val]
+        : PEDIATRIC_MONOGRAPHS[val] || ADULT_MONOGRAPHS[val];
+
+    if (!mono) {
+      monographBox.innerHTML = `<p><strong>${val}</strong>: No monograph found.</p>`;
+      return;
+    }
+
+
+    let html = `<h3>${val} – ${currentMode === "adult" ? "Adult" : "Pediatric"} Monograph</h3>`;
+    if (mono.spectrum) html += `<p><strong>Spectrum:</strong> ${mono.spectrum}</p>`;
+    if (mono.dosing) html += `<p><strong>Dosing:</strong> ${mono.dosing}</p>`;
+    if (mono.renal) html += `<p><strong>Renal adj:</strong> ${mono.renal}</p>`;
+    if (mono.hepatic) html += `<p><strong>Hepatic adj:</strong> ${mono.hepatic}</p>`;
+    if (mono.duration) html += `<p><strong>Typical duration:</strong> ${mono.duration}</p>`;
+    if (mono.monitoring) html += `<p><strong>Monitoring:</strong> ${mono.monitoring}</p>`;
+    monographBox.innerHTML = html;
+
+    // Drug type
+    const list = DRUG_LISTS[currentMode] || [];
+    const f = list.find(x => x.value === val);
+    document.getElementById("drugTypeBox").value =
+      f ? (f.type === "restricted" ? "Restricted" : "Monitored") : "";
+
+    // Restricted = show IDs + service resident
+    if (f && f.type === "restricted") {
+      if (currentMode === "adult") {
+        serviceTitle.textContent = "Internal Medicine Resident";
+        serviceLabel.textContent = "Internal Medicine Resident's Name";
+        idsSelect.innerHTML = `
+          <option value="">Select</option>
+          <option>Dr. Christoper John Tibayan</option>
+          <option>Dr. Paulo Garcia</option>
+          <option>Dr. Jelly Ann Gozun-Recuenco</option>
+        `;
+      } else {
+        serviceTitle.textContent = "Pediatrics Resident";
+        serviceLabel.textContent = "Pediatrics Resident's Name";
+        idsSelect.innerHTML = `
+          <option value="">Select</option>
+          <option>Dr. Michelle Carandang-Cuvin</option>
+          <option>Dr. Pia Catrina Tolentino Torres</option>
+        `;
+      }
+      serviceCard.style.display = "block";
+    }
+  }
+
+  // ============================
+  // DYNAMIC PREVIOUS ABX + ORGANISM BLOCKS
+  // ============================
+  function addPrevAbxRow() {
+    const c = document.getElementById("prevAbxContainer");
+    const row = document.createElement("div");
+    row.className = "dyn-row";
+    row.innerHTML = `
+      <input type="text" placeholder="Drug name">
+      <input type="text" placeholder="Frequency">
+      <input type="text" placeholder="Duration">
+      <button type="button" class="icon-btn danger">➖</button>
+    `;
+    row.querySelector("button").addEventListener("click",()=>row.remove());
+    c.appendChild(row);
+  }
+
+  function addOrganismBlock() {
+    const container = document.getElementById("organismContainer");
+    const block = document.createElement("div");
+    block.className = "organism-block";
+
+    block.innerHTML = `
+      <div class="organism-header">
+        <span>Organism</span>
+        <button type="button" class="icon-btn danger">➖</button>
+      </div>
+      <div class="field-row">
+        <div class="field" style="flex:1 1 100%;">
+          <label>Name</label>
+          <input type="text" placeholder="e.g., E. coli">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="flex:1 1 100%;">
+          <label>Susceptibilities (Drug – S/I/R)</label>
+          <div class="susc-container"></div>
+          <button type="button" class="icon-btn" data-role="add-susc">➕ Add Drug</button>
+        </div>
+      </div>
+    `;
+
+    block.querySelector(".organism-header button")
+      .addEventListener("click", ()=>block.remove());
+
+    const dyn = block.querySelector(".susc-container");
+    const addBtn = block.querySelector("[data-role='add-susc']");
+    addBtn.addEventListener("click",()=>{
+      const r = document.createElement("div");
+      r.className = "susc-row";
+      r.innerHTML = `
+        <input type="text" placeholder="Drug">
+        <select>
+          <option value=""></option>
+          <option value="S">S</option>
+          <option value="I">I</option>
+          <option value="R">R</option>
+        </select>
+      `;
+      dyn.appendChild(r);
+          });
+
+    addBtn.click();
+    container.appendChild(block);
+  }
+
+  // ============================
+  // VALIDATION
+  // ============================
+  function validateForm() {
+    const required = {
+      patientName:"Patient Name",
+      age:"Age",
+      sex:"Sex",
+      weight:"Weight",
+      hospitalNumber:"Hospital Number",
+      ward:"Ward",
+      diagnosis:"Diagnosis",
+      antimicrobialSelect:"Antimicrobial",
+      dose:"Dose",
+      frequency:"Frequency",
+      duration:"Duration",
+      residentName:"Resident Name",
+      clinicalDept:"Clinical Department",
+      reqDate:"Date"
+    };
+
+    for (let id in required) {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) {
+        alert(required[id] + " is required.");
+        el.focus();
+        return false;
+      }
+    }
+
+    // Serum Creatinine: required ONLY if not marked as "not yet available"
+    const scrNotAvail = document.getElementById("scrNotAvailable").checked;
+    const scrEl = document.getElementById("scr");
+    if (!scrNotAvail) {
+      if (!scrEl.value.trim()) {
+        alert("Serum Creatinine is required unless marked as not yet available.");
+        scrEl.focus();
+        return false;
+      }
+    }
+
+    
+    // Indication required
+    if (!selectedIndication || !selectedIndication.trim()) {
+      alert("Indication is required.");
+      return false;
+    }
+
+    // NEW: Basis for Indication required
+    const basis = document.getElementById("basisIndication").value.trim();
+    if (!basis) {
+      alert("Basis for Indication is required.");
+      document.getElementById("basisIndication").focus();
+      return false;
+    }
+
+    // Pediatric height
+    if (currentMode === "pediatric") {
+      const ht = document.getElementById("height");
+      if (!ht.value.trim()) {
+        alert("Height is required for pediatric patients.");
+        ht.focus();
+        return false;
+      }
+    }
+
+    // Restricted fields
+    const drug = document.getElementById("antimicrobialSelect").value;
+    const list = DRUG_LISTS[currentMode] || [];
+    const f = list.find(x => x.value === drug);
+
+    if (f && f.type === "restricted") {
+      const srv = document.getElementById("serviceResidentName");
+      const ids = document.getElementById("idsSelect");
+
+      if (!srv.value.trim()) {
+        alert("Service Resident is required for restricted antimicrobials.");
+        srv.focus();
+        return false;
+      }
+      if (!ids.value.trim()) {
+        alert("ID Specialist is required for restricted antimicrobials.");
+        ids.focus();
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // ============================
+  // REVIEW MODAL
+  // ============================
+  function openReviewModal() {
+    document.getElementById("summaryBody").innerHTML = buildSummary();
+    document.getElementById("modalBackdrop").classList.add("show");
+  }
+
+  function closeModal() {
+    document.getElementById("modalBackdrop").classList.remove("show");
+  }
+
+function buildSummary() {
+  const p = collectPayload(); // reuse the same data you're about to submit
+
+  // Build Previous Antibiotics list
+  let prevAbxHtml = p.previousAntibiotics.length
+    ? p.previousAntibiotics.map(a =>
+        `<li>${a.drug || '—'} — ${a.frequency || '—'} — ${a.duration || '—'}</li>`
+      ).join("")
+    : "<em>No previous antibiotics listed</em>";
+
+  // Build Microbiology data
+  let microHtml = `
+    <div><span class="summary-label">Specimen:</span> ${p.specimen || "—"}</div>
+  `;
+
+  if (p.organisms.length) {
+    microHtml += `<ul>`;
+    p.organisms.forEach(org => {
+      microHtml += `
+        <li>
+          <strong>${org.name || "Unnamed Organism"}</strong>
+          <ul>
+            ${
+              org.susceptibilities.length
+                ? org.susceptibilities
+                    .map(s => `<li>${s.drug || 'Drug'} — ${s.result || 'S/I/R'}</li>`)
+                    .join("")
+                : "<li><em>No susceptibility data</em></li>"
+            }
+          </ul>
+        </li>
+      `;
+    });
+    microHtml += `</ul>`;
+  } else {
+    microHtml += `<em>No organisms listed</em>`;
+  }
+
+  // Restricted fields
+  let restrictedHtml = "";
+  if (p.drugType === "Restricted") {
+    restrictedHtml = `
+      <div><span class="summary-label">Service Resident:</span> ${p.serviceResidentName || "—"}</div>
+      <div><span class="summary-label">ID Specialist:</span> ${p.idSpecialist || "—"}</div>
+    `;
+  }
+
+  return `
+    <div><span class="summary-label">Indication:</span> ${p.indication}</div>
+    <div><span class="summary-label">Basis:</span> ${p.basisIndication}</div>
+    <hr>
+
+    <div><span class="summary-label">Patient:</span> ${p.patientName}</div>
+    <div><span class="summary-label">Age / Sex / Weight:</span> ${p.age} y / ${p.sex} / ${p.weightKg} kg</div>
+    ${
+      p.heightCm
+        ? `<div><span class="summary-label">Height:</span> ${p.heightCm} cm</div>`
+        : ""
+    }
+    <div><span class="summary-label">Hospital Number:</span> ${p.hospitalNumber}</div>
+    <div><span class="summary-label">Ward:</span> ${p.ward}</div>
+    <div><span class="summary-label">Diagnosis:</span> ${p.diagnosis}</div>
+    <hr>
+
+    <div><span class="summary-label">Laboratory Data:</span></div>
+    <div>Scr: ${p.scrMgDl} mg/dL</div>
+    <div>SGPT: ${p.sgpt || "—"}</div>
+    <div>eGFR: ${p.egfrText}</div>
+    <hr>
+
+    <div><span class="summary-label">Antimicrobial:</span> ${p.antimicrobial}</div>
+    <div><span class="summary-label">Drug Type:</span> ${p.drugType}</div>
+    <div><span class="summary-label">Dose:</span> ${p.dose}</div>
+    <div><span class="summary-label">Frequency:</span> ${p.frequency}</div>
+    <div><span class="summary-label">Duration:</span> ${p.duration}</div>
+    <hr>
+
+    <div><span class="summary-label">Previous Antibiotics:</span></div>
+    <ul>${prevAbxHtml}</ul>
+    <hr>
+
+    <div><span class="summary-label">Microbiology:</span></div>
+    ${microHtml}
+    <hr>
+
+    <div><span class="summary-label">Resident:</span> ${p.residentName}</div>
+    <div><span class="summary-label">Department:</span> ${p.clinicalDept}</div>
+    <div><span class="summary-label">Date:</span> ${p.reqDate}</div>
+
+    ${restrictedHtml}
+  `;
+}
+
+
+  // ============================
+  // PAYLOAD → SHEET
+  // ============================
+function collectPayload() {
+  const payload = {
+    mode: currentMode,
+    patientName: document.getElementById("patientName").value || "",
+    age: document.getElementById("age").value || "",
+    sex: document.getElementById("sex").value || "",
+    weightKg: document.getElementById("weight").value || "",
+    heightCm: currentMode === "pediatric" ? (document.getElementById("height").value || "") : "",
+    hospitalNumber: document.getElementById("hospitalNumber").value || "",
+    ward: document.getElementById("ward").value || "",
+    diagnosis: document.getElementById("diagnosis").value || "",
+    scrMgDl: (function () {
+      const scrNotAvail = document.getElementById("scrNotAvailable").checked;
+      const scrVal = document.getElementById("scr").value || "";
+      return scrNotAvail ? "Pending" : scrVal;
+    })(),
+    sgpt: document.getElementById("sgpt").value || "",
+    egfrText: document.getElementById("egfrBox").textContent || "",
+    sgpt: document.getElementById("sgpt").value || "",
+    egfrText: document.getElementById("egfrBox").textContent || "",
+
+    antimicrobial: document.getElementById("antimicrobialSelect").value || "",
+    dose: document.getElementById("dose").value || "",
+    frequency: document.getElementById("frequency").value || "",
+    duration: document.getElementById("duration").value || "",
+
+    indication: selectedIndication,
+    basisIndication: document.getElementById("basisIndication").value || "",
+
+    specimen: document.getElementById("specimen").value || "",
+    previousAntibiotics: [],
+    organisms: [],
+
+    residentName: document.getElementById("residentName").value || "",
+    clinicalDept: document.getElementById("clinicalDept").value || "",
+
+    // 🔥 KEEP RAW yyyy-mm-dd
+    reqDate: document.getElementById("reqDate").value || "",
+
+    serviceResidentName: document.getElementById("serviceResidentName").value || "",
+    idSpecialist: document.getElementById("idsSelect").value || "",
+
+    status: "pending"
+  };
+
+  // Previous antibiotics
+  document.querySelectorAll("#prevAbxContainer .dyn-row").forEach(row => {
+    const i = row.querySelectorAll("input");
+    if (i.length >= 3) {
+      const d = i[0].value.trim();
+      const f = i[1].value.trim();
+      const du = i[2].value.trim();
+      if (d || f || du) {
+        payload.previousAntibiotics.push({ drug: d, frequency: f, duration: du });
+      }
+    }
+  });
+
+// Organisms
+document.querySelectorAll("#organismContainer .organism-block").forEach(block => {
+  const name = block.querySelector("input").value || "";
+  const pairs = [];
+
+  // NEW: for each susceptibility row
+  block.querySelectorAll(".susc-row").forEach(r => {
+    const drug = r.querySelector("input")?.value || "";
+    const res  = r.querySelector("select")?.value || "";
+    if (drug || res) pairs.push({ drug, result: res });
+  });
+
+  if (name || pairs.length) {
+    payload.organisms.push({
+      name,
+      susceptibilities: pairs
+    });
+  }
+});
+
+
+  // Drug type
+  const list = DRUG_LISTS[currentMode] || [];
+  const f = list.find(x => x.value === payload.antimicrobial);
+  payload.drugType = f ? (f.type === "restricted" ? "Restricted" : "Monitored") : "";
+
+  // Timestamp
+  payload.timestamp = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
+
+  return payload;
+}
+
+
+  // ============================
+  // SUBMIT FORM
+  // ============================
+  async function submitForm() {
+    closeModal();
+    const payload = collectPayload();
+
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method:"POST",
+        body:JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Network error");
+      alert("Request submitted successfully.");
+    } catch (err) {
+      alert("Submission failed.");
+      console.error(err);
+    }
+  }
+
+  document.getElementById("downloadPdfBtn").addEventListener("click", ()=>window.print());
+
+  window.addEventListener("DOMContentLoaded", init);
+</script>
+
+</body>
+</html>
