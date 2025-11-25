@@ -72,6 +72,6 @@ function addSusceptibility(block) {
   `;
 
   row.querySelector("button").onclick = () => row.remove();
-
+ 
   container.appendChild(row);
 }
