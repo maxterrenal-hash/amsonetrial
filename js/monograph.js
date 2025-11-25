@@ -1,4 +1,4 @@
-// monograph.js
+//  monograph.js
 import { currentMode } from "./mode.js";
 import { DRUG_LISTS } from "./drugs.js";
 import { $, show, hide } from "./dom.js";
