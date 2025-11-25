@@ -1,4 +1,4 @@
-// validation.js
+/ validation.js
 import { $ } from "./dom.js";
 
 export function initValidation() {}
