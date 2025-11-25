@@ -1,4 +1,4 @@
-// app.js
+//  app.js
 import { buildDrugLists } from "./drugs.js";
 import { initModeToggle, applyModeMode } from "./mode.js";
 import { initEgfr } from "./egfr.js";
