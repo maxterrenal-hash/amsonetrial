@@ -1,4 +1,4 @@
-// egfr.js
+//  egfr.js
 import { $, show, hide } from "./dom.js";
 import { currentMode } from "./mode.js";
 
