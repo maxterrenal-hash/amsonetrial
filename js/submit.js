@@ -1,4 +1,4 @@
-// submit.js
+//  submit.js
 import { $, show, hide } from "./dom.js";
 import { currentMode } from "./mode.js";
 import { validateForm } from "./validation.js";
