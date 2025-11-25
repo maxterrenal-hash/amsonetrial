@@ -10,6 +10,59 @@
        ============================= -->
   <link rel="stylesheet" href="css/style.css" />
 
+  <!-- =============================
+       FIXED GRID LAYOUT (Copied from 2nd file)
+       ============================= -->
+  <style>
+    /* Desktop ≥900px */
+    @media (min-width: 900px) {
+      /* Lab spans both columns */
+      .lab-card {
+        grid-column: 1 / 3;
+      }
+
+      /* Left column cards */
+      .antimicrobial-card,
+      .indication-card,
+      .resident-card,
+      #serviceResidentCard {
+        grid-column: 1;
+      }
+
+      /* Right column cards */
+      .monograph-card,
+      .prevabx-card,
+      .micro-card {
+        grid-column: 2;
+      }
+    }
+
+    /* Mobile stack order */
+    @media (max-width: 900px) {
+      .grid-two {
+        display: grid;
+        grid-template-areas:
+          "lab"
+          "antimicrobial"
+          "monograph"
+          "indication"
+          "prevabx"
+          "micro"
+          "resident"
+          "service";
+      }
+
+      .lab-card { grid-area: lab; }
+      .antimicrobial-card { grid-area: antimicrobial; }
+      .monograph-card { grid-area: monograph; }
+      .indication-card { grid-area: indication; }
+      .prevabx-card { grid-area: prevabx; }
+      .micro-card { grid-area: micro; }
+      .resident-card { grid-area: resident; }
+      #serviceResidentCard { grid-area: service; }
+    }
+  </style>
+
 </head>
 
 <body>
@@ -111,12 +164,10 @@
       </div>
     </div>
 
-    <!-- GRID LAYOUT -->
+    <!-- ===== GRID LAYOUT FIX APPLIED HERE ===== -->
     <div class="grid-two">
 
-      <!-- =============================
-           LAB DATA
-           ============================= -->
+      <!-- LAB DATA -->
       <div class="card lab-card">
         <h2>Laboratory Data</h2>
 
@@ -143,21 +194,19 @@
         </label>
       </div>
 
-      <!-- =============================
-           ANTIMICROBIAL SELECTION
-           ============================= -->
+      <!-- ANTIMICROBIAL -->
       <div class="card antimicrobial-card">
         <h2>Antimicrobial Selection</h2>
 
         <div class="field-row">
-          <div class="field" style="flex:1;">
+          <div class="field">
             <label>Antimicrobial</label>
             <select id="antimicrobialSelect"></select>
           </div>
         </div>
 
         <div class="field-row">
-          <div class="field" style="flex:1;">
+          <div class="field">
             <label>Drug Type</label>
             <input id="drugTypeBox" type="text" readonly>
           </div>
@@ -181,9 +230,7 @@
         </div>
       </div>
 
-      <!-- =============================
-           INDICATION
-           ============================= -->
+      <!-- INDICATION -->
       <div class="card indication-card">
         <h2>Indication</h2>
         <div class="chips-row" id="indicationRow">
@@ -193,16 +240,14 @@
         </div>
 
         <div class="field-row" style="margin-top:0.75rem;">
-          <div class="field" style="flex:1;">
+          <div class="field">
             <label>Basis for Indication</label>
             <textarea id="basisIndication"></textarea>
           </div>
         </div>
       </div>
 
-      <!-- =============================
-           RESIDENT INFO
-           ============================= -->
+      <!-- RESIDENT -->
       <div class="card resident-card">
         <h2>Requesting Resident</h2>
         <div class="field-row">
@@ -231,12 +276,9 @@
         </div>
       </div>
 
-      <!-- =============================
-           ID SPECIALIST (RESTRICTED)
-           ============================= -->
+      <!-- SERVICE RESIDENT -->
       <div id="serviceResidentCard" class="card" style="display:none;">
         <h2>Service Resident / IDS</h2>
-
         <div class="field-row">
           <div class="field">
             <label>Service Resident</label>
@@ -250,9 +292,7 @@
         </div>
       </div>
 
-      <!-- =============================
-           DRUG MONOGRAPH
-           ============================= -->
+      <!-- DRUG MONOGRAPH -->
       <div class="card monograph-card">
         <h2>Drug Monograph</h2>
         <div id="monographBox">
@@ -260,45 +300,36 @@
         </div>
       </div>
 
-      <!-- =============================
-           PREVIOUS ANTIBIOTICS
-           ============================= -->
+      <!-- PREVIOUS ABX -->
       <div class="card prevabx-card">
         <h2>Previous / Current Antibiotics</h2>
         <div id="prevAbxContainer"></div>
         <button id="addPrevAbxBtn" class="icon-btn">➕ Add</button>
       </div>
 
-      <!-- =============================
-           MICROBIOLOGY
-           ============================= -->
+      <!-- MICRO -->
       <div class="card micro-card">
         <h2>Microbiology Data</h2>
-
         <div class="field-row">
-          <div class="field" style="flex:1;">
+          <div class="field">
             <label>Specimen Type</label>
             <input id="specimen" type="text">
           </div>
         </div>
-
         <div id="organismContainer"></div>
         <button id="addOrganismBtn" class="icon-btn">➕ Add Organism</button>
       </div>
+
     </div>
 
-    <!-- =============================
-         ACTIONS
-         ============================= -->
+    <!-- ACTIONS -->
     <div class="actions">
       <button id="reviewBtn" class="btn primary">Review</button>
       <button id="downloadPdfBtn" class="btn secondary">Download PDF</button>
     </div>
   </div>
 
-  <!-- =============================
-       MODAL
-       ============================= -->
+  <!-- MODAL -->
   <div id="reviewModalBackdrop" class="modal-backdrop">
     <div class="modal">
       <div class="modal-header">
@@ -316,16 +347,11 @@
     </div>
   </div>
 
-  <!-- =============================
-       MONOGRAPHS
-       ============================= -->
+  <!-- MONOGRAPHS + APP -->
   <script src="adult_monographs.js"></script>
   <script src="pediatric_monographs.js"></script>
-
-  <!-- =============================
-       MODULAR AMS SYSTEM
-       ============================= -->
   <script type="module" src="js/app.js"></script>
 
 </body>
 </html>
+
